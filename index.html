@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('8930707.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5); /* Decreased opacity */
+            border-radius: 10px;
+        }
+        h2 {
+            text-align: center;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #6a0dad; /* Purple background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #5e0cac; /* Darker purple on hover */
+        }
+        .message {
+            color: red;
+            text-align: center;
+        }
+        .quiz-selection, .quiz-container, .feedback-container {
+            display: none;
+        }
+        .question {
+            margin-bottom: 15px;
+        }
+        .feedback {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .feedback.correct {
+            color: green;
+        }
+        .feedback.incorrect {
+            color: red;
+        }
+        .feedback span {
+            margin-left: 10px;
+        }
+        .feedback-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="login-signup-container">
+        <h2>Login or Sign Up</h2>
+        <div id="message" class="message"></div>
+        <input type="text" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="signUp()">Sign Up</button>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div class="container quiz-selection" id="quiz-selection-container">
+        <h2>Select a Quiz</h2>
+        <button onclick="startQuiz('HTML')">HTML</button>
+        <button onclick="startQuiz('Python')">Python</button>
+        <button onclick="startQuiz('Java')">Java</button>
+        <button onclick="startQuiz('CSS')">CSS</button>
+        <button onclick="startQuiz('JavaScript')">JavaScript</button>
+    </div>
+
+    <div class="container quiz-container" id="quiz-container">
+        <h2 id="quiz-title"></h2>
+        <div id="quiz-content"></div>
+        <button onclick="submitQuiz()">Submit Quiz</button>
+    </div>
+
+    <div class="container feedback-container" id="feedback-container">
+        <h2>Quiz Feedback</h2>
+        <div id="feedback-content"></div>
+    </div>
+
+    <script>
+        // User data storage
+        const users = new Map();
+
+        // Questions for each topic
+        const questions = {
+            HTML: [
+                { question: "What does HTML stand for?", choices: ["Cascading Style Sheets", "Creative Style Sheets", "Computer Style Sheets"], correct: 0 },
+                { question: "Who is making the Web standards?", choices: ["Mozilla", "Google", "The World Wide Web Consortium"], correct: 2 },
+                { question: "Choose the correct HTML element for the largest heading:", choices: ["<h6>", "<h1>", "<head>"], correct: 1 },
+                { question: "What is the correct HTML element to define important text?", choices: ["<b>", "<i>", "<strong>"], correct: 2 },
+                { question: "What does the <meta> tag in HTML do?", choices: ["Defines metadata about the HTML document", "Specifies the style of the page", "Adds a navigation bar"], correct: 0 },
+                { question: "Which attribute specifies an alternate text for an image, if the image cannot be displayed?", choices: ["src", "alt", "title"], correct: 1 },
+                { question: "How do you include an external CSS file in HTML?", choices: ["<style src='styles.css'>", "<link rel='stylesheet' href='styles.css'>", "<css href='styles.css'>"], correct: 1 },
+                { question: "What is the purpose of the <form> tag in HTML?", choices: ["Defines an interactive form", "Specifies a section of the document", "Creates a table"], correct: 0 },
+                { question: "How can you include JavaScript code in HTML?", choices: ["<script src='script.js'>", "<js src='script.js'>", "<link src='script.js'>"], correct: 0 },
+                { question: "What is the purpose of the <canvas> element in HTML5?", choices: ["To create graphics on the fly", "To add video content", "To include external scripts"], correct: 0 }
+            ],
+            Python: [
+                { question: "What is the correct file extension for Python files?", choices: [".pyth", ".pt", ".py"], correct: 2 },
+                { question: "How do you create a variable with the numeric value 5?", choices: ["x = int(5)", "x = 5", "Both"], correct: 2 },
+                { question: "Which method can be used to remove any whitespace from both the beginning and the end of a string?", choices: ["strip()", "trim()", "len()"], correct: 0 },
+                { question: "What is the correct syntax to output 'Hello World' in Python?", choices: ["echo('Hello World')", "print('Hello World')", "console.log('Hello World')"], correct: 1 },
+                { question: "What is the purpose of the 'self' keyword in Python?", choices: ["Refers to the current instance of the class", "Defines a new class", "Creates a variable"], correct: 0 },
+                { question: "Which function is used to read data from a file in Python?", choices: ["read()", "get()", "open()"], correct: 0 },
+                { question: "What does the 'continue' statement do in a loop?", choices: ["Exits the loop", "Skips the current iteration and continues to the next iteration", "Breaks the loop"], correct: 1 },
+                { question: "Which of the following is a mutable data type in Python?", choices: ["tuple", "list", "string"], correct: 1 },
+                { question: "How do you handle exceptions in Python?", choices: ["try-except blocks", "catch blocks", "error handling"], correct: 0 },
+                { question: "What is the purpose of the 'with' statement in Python?", choices: ["To manage resources and ensure proper cleanup", "To define a new function", "To create a class"], correct: 0 }
+            ],
+            Java: [
+                { question: "Which company developed Java?", choices: ["Microsoft", "Sun Microsystems", "Google"], correct: 1 },
+                { question: "Which keyword is used to create a class in Java?", choices: ["class", "MyClass", "Class"], correct: 0 },
+                { question: "Which of these is a reserved word in Java?", choices: ["array", "goto", "null"], correct: 1 },
+                { question: "Which method is used to start a thread in Java?", choices: ["start()", "run()", "begin()"], correct: 0 },
+                { question: "What is the default value of a boolean variable in Java?", choices: ["true", "false", "null"], correct: 1 },
+                { question: "Which access modifier allows access to a member only within its own class?", choices: ["public", "protected", "private"], correct: 2 },
+                { question: "What is the result of 10 / 3 in Java?", choices: ["3", "3.3", "3.333"], correct: 0 },
+                { question: "What is the purpose of the 'static' keyword in Java?", choices: ["It allows a method to be called without creating an instance of the class", "It defines a new class", "It makes a method synchronized"], correct: 0 },
+                { question: "How do you create a new thread in Java?", choices: ["By implementing the Runnable interface", "By extending the Thread class", "Both"], correct: 2 },
+                { question: "What is the purpose of the 'synchronized' keyword in Java?", choices: ["To ensure only one thread can access a resource at a time", "To create a new thread", "To stop a thread"], correct: 0 }
+            ],
+            CSS: [
+                { question: "What does CSS stand for?", choices: ["Computer Style Sheets", "Creative Style Sheets", "Cascading Style Sheets"], correct: 2 },
+                { question: "Where in an HTML document is the correct place to refer to an external style sheet?", choices: ["In the <head> section", "At the end of the document", "In the <body> section"], correct: 0 },
+                { question: "Which HTML attribute is used to define inline styles?", choices: ["styles", "class", "style"], correct: 2 },
+                { question: "Which is the correct CSS syntax?", choices: ["body:color=black;", "body {color: black;}", "{body;color:black;"], correct: 1 },
+                { question: "How do you add a background color for all <h1> elements?", choices: ["all.h1 {background-color:#FFFFFF;}", "h1 {background-color:#FFFFFF;}", "h1.all {background-color:#FFFFFF;}"], correct: 1 },
+                { question: "Which CSS property is used to change the text color of an element?", choices: ["fgcolor", "text-color", "color"], correct: 2 },
+                { question: "Which CSS property controls the text size?", choices: ["font-size", "text-size", "font-style"], correct: 0 },
+                { question: "How do you display hyperlinks without an underline?", choices: ["a {decoration:no-underline;}", "a {underline:none;}", "a {text-decoration:none;}"], correct: 2 },
+                { question: "Which property is used to change the font of an element?", choices: ["font-family", "font-style", "font-weight"], correct: 0 },
+                { question: "How do you make the text bold?", choices: ["font:bold;", "font-weight:bold;", "style:bold;"], correct: 1 }
+            ],
+            JavaScript: [
+                { question: "Inside which HTML element do we put the JavaScript?", choices: ["<javascript>", "<script>", "<js>"], correct: 1 },
+                { question: "What is the correct syntax for referring to an external script called 'xxx.js'?", choices: ["<script src='xxx.js'>", "<script name='xxx.js'>", "<script href='xxx.js'>"], correct: 0 },
+                { question: "How do you write 'Hello World' in an alert box?", choices: ["alert('Hello World');", "msg('Hello World');", "alertBox('Hello World');"], correct: 0 },
+                { question: "How do you create a function in JavaScript?", choices: ["function:myFunction()", "function myFunction()", "function = myFunction()"], correct: 1 },
+                { question: "How do you call a function named 'myFunction'?", choices: ["call myFunction()", "call function myFunction()", "myFunction()"], correct: 2 },
+                { question: "How do you write an IF statement in JavaScript?", choices: ["if i == 5 then", "if (i == 5)", "if i = 5"], correct: 1 },
+                { question: "How does a WHILE loop start?", choices: ["while i = 1 to 10", "while (i <= 10)", "while (i < 10; i++)"], correct: 1 },
+                { question: "How can you add a comment in a JavaScript?", choices: ["'This is a comment", "//This is a comment", "<!--This is a comment-->"], correct: 1 },
+                { question: "What is the correct way to write a JavaScript array?", choices: ["var colors = 'red', 'green', 'blue'", "var colors = (1:'red', 2:'green', 3:'blue')", "var colors = ['red', 'green', 'blue']"], correct: 2 },
+                { question: "How do you round the number 7.25 to the nearest integer?", choices: ["Math.rnd(7.25)", "round(7.25)", "Math.round(7.25)"], correct: 2 }
+            ]
+        };
+
+        // Shuffle function to randomize questions
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Sign up function
+        function signUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const message = document.getElementById('message');
+            
+            if (!validateEmail(email)) {
+                message.textContent = 'Invalid email format.';
+                return;
+            }
+
+            if (users.has(email)) {
+                message.textContent = 'User already exists.';
+            } else {
+                users.set(email, password);
+                message.textContent = 'User registered successfully!';
+            }
+        }
+
+        // Login function
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const message = document.getElementById('message');
+
+            if (!validateEmail(email)) {
+                message.textContent = 'Invalid email format.';
+                return;
+            }
+
+            if (users.get(email) === password) {
+                document.getElementById('login-signup-container').style.display = 'none';
+                document.getElementById('quiz-selection-container').style.display = 'block';
+            } else {
+                message.textContent = 'Invalid credentials.';
+            }
+        }
+
+        // Email validation function
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // Start quiz function
+        function startQuiz(topic) {
+            document.getElementById('quiz-selection-container').style.display = 'none';
+            document.getElementById('quiz-container').style.display = 'block';
+            document.getElementById('quiz-title').textContent = `${topic} Quiz`;
+
+            const quizContent = document.getElementById('quiz-content');
+            quizContent.innerHTML = '';
+
+            const topicQuestions = [...questions[topic]]; // Copy questions array
+            shuffle(topicQuestions); // Shuffle questions
+
+            topicQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+
+                const questionTitle = document.createElement('h3');
+                questionTitle.textContent = q.question;
+                questionDiv.appendChild(questionTitle);
+
+                q.choices.forEach((choice, i) => {
+                    const label = document.createElement('label');
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = `question${index}`;
+                    input.value = i;
+                    label.appendChild(input);
+                    label.appendChild(document.createTextNode(choice));
+                    questionDiv.appendChild(label);
+                    questionDiv.appendChild(document.createElement('br'));
+                });
+
+                quizContent.appendChild(questionDiv);
+            });
+        }
+
+        // Submit quiz function
+        function submitQuiz() {
+            const quizContent = document.getElementById('quiz-content');
+            const quizTitle = document.getElementById('quiz-title').textContent.replace(' Quiz', '');
+            const topicQuestions = questions[quizTitle];
+            const feedbackContent = document.getElementById('feedback-content');
+            feedbackContent.innerHTML = '';
+            let score = 0;
+
+            topicQuestions.forEach((q, index) => {
+                const userAnswer = document.querySelector(`input[name="question${index}"]:checked`);
+                const feedback = document.createElement('div');
+                feedback.className = 'feedback';
+                
+                if (userAnswer && parseInt(userAnswer.value) === q.correct) {
+                    feedback.classList.add('correct');
+                    feedback.textContent = `Question ${index + 1}: Correct!`;
+                    score++;
+                } else {
+                    feedback.classList.add('incorrect');
+                    feedback.textContent = `Question ${index + 1}: Incorrect. Correct answer: ${q.choices[q.correct]}`;
+                }
+
+                feedbackContent.appendChild(feedback);
+            });
+
+            const scoreFeedback = document.createElement('div');
+            scoreFeedback.textContent = `Your score: ${score}/${topicQuestions.length}`;
+            feedbackContent.appendChild(scoreFeedback);
+
+            document.getElementById('quiz-container').style.display = 'none';
+            document.getElementById('feedback-container').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
