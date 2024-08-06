@@ -3,24 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Manager</title>
+    <title>Quiz Generator</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-image: url('8930707.jpg');
-            background-size: cover;
-            background-position: center;
-            color: #fff;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
         .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             max-width: 600px;
             margin: 50px auto;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.5); /* Decreased opacity */
-            border-radius: 10px;
         }
-        h2 {
+        h1, h2 {
             text-align: center;
+        }
+        label, select, button, input {
+            display: block;
+            margin: 10px 0;
         }
         input[type="text"], input[type="password"] {
             width: 100%;
@@ -32,49 +40,32 @@
         button {
             width: 100%;
             padding: 10px;
-            background-color: #6a0dad; /* Purple background */
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-top: 10px;
         }
         button:hover {
-            background-color: #5e0cac; /* Darker purple on hover */
+            background-color: #218838;
         }
         .message {
             color: red;
             text-align: center;
         }
-        .quiz-selection, .quiz-container, .feedback-container {
-            display: none;
-        }
-        .question {
-            margin-bottom: 15px;
-        }
-        .feedback {
-            display: flex;
-            align-items: center;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-        .feedback.correct {
+        .correct-answer {
             color: green;
         }
-        .feedback.incorrect {
+        .wrong-answer {
             color: red;
         }
-        .feedback span {
-            margin-left: 10px;
-        }
-        .feedback-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
+    <!-- Sign In/Sign Up Section -->
     <div class="container" id="login-signup-container">
         <h2>Login or Sign Up</h2>
         <div id="message" class="message"></div>
@@ -84,101 +75,50 @@
         <button onclick="login()">Login</button>
     </div>
 
-    <div class="container quiz-selection" id="quiz-selection-container">
-        <h2>Select a Quiz</h2>
-        <button onclick="startQuiz('HTML')">HTML</button>
-        <button onclick="startQuiz('Python')">Python</button>
-        <button onclick="startQuiz('Java')">Java</button>
-        <button onclick="startQuiz('CSS')">CSS</button>
-        <button onclick="startQuiz('JavaScript')">JavaScript</button>
-    </div>
-
-    <div class="container quiz-container" id="quiz-container">
-        <h2 id="quiz-title"></h2>
-        <div id="quiz-content"></div>
-        <button onclick="submitQuiz()">Submit Quiz</button>
-    </div>
-
-    <div class="container feedback-container" id="feedback-container">
-        <h2>Quiz Feedback</h2>
-        <div id="feedback-content"></div>
+    <!-- Quiz Generator Section -->
+    <div class="container hidden" id="quiz-container">
+        <h1>Quiz Generator</h1>
+        <div id="selection">
+            <label for="topic">Choose a topic:</label>
+            <select id="topic">
+                <option value="python">Python</option>
+                <option value="c">C</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="js">JavaScript</option>
+                <option value="dbms">DBMS</option>
+                <option value="computers">Computers</option>
+                <option value="networks">Networks</option>
+                <option value="excel">Excel</option>
+                <option value="word">Word</option>
+                <option value="ai">AI</option>
+                <option value="ml">ML</option>
+                <option value="cloud">Cloud</option>
+                <option value="datascience">Data Science</option>
+                <option value="electric">Electric</option>
+                <option value="electronics">Electronics</option>
+                <option value="power">Power</option>
+            </select>
+            <label for="difficulty">Choose difficulty:</label>
+            <select id="difficulty">
+                <option value="easy">Easy</option>
+                <option value="moderate">Moderate</option>
+                <option value="extreme">Extreme</option>
+            </select>
+            <button onclick="generateQuiz()">Start Quiz</button>
+        </div>
+        <div id="quiz" class="hidden">
+            <div id="questions"></div>
+            <button onclick="submitQuiz()">Submit Quiz</button>
+        </div>
+        <div id="result" class="hidden"></div>
     </div>
 
     <script>
         // User data storage
         const users = new Map();
-
-        // Questions for each topic
-        const questions = {
-            HTML: [
-                { question: "What does HTML stand for?", choices: ["Cascading Style Sheets", "Creative Style Sheets", "Computer Style Sheets"], correct: 0 },
-                { question: "Who is making the Web standards?", choices: ["Mozilla", "Google", "The World Wide Web Consortium"], correct: 2 },
-                { question: "Choose the correct HTML element for the largest heading:", choices: ["<h6>", "<h1>", "<head>"], correct: 1 },
-                { question: "What is the correct HTML element to define important text?", choices: ["<b>", "<i>", "<strong>"], correct: 2 },
-                { question: "What does the <meta> tag in HTML do?", choices: ["Defines metadata about the HTML document", "Specifies the style of the page", "Adds a navigation bar"], correct: 0 },
-                { question: "Which attribute specifies an alternate text for an image, if the image cannot be displayed?", choices: ["src", "alt", "title"], correct: 1 },
-                { question: "How do you include an external CSS file in HTML?", choices: ["<style src='styles.css'>", "<link rel='stylesheet' href='styles.css'>", "<css href='styles.css'>"], correct: 1 },
-                { question: "What is the purpose of the <form> tag in HTML?", choices: ["Defines an interactive form", "Specifies a section of the document", "Creates a table"], correct: 0 },
-                { question: "How can you include JavaScript code in HTML?", choices: ["<script src='script.js'>", "<js src='script.js'>", "<link src='script.js'>"], correct: 0 },
-                { question: "What is the purpose of the <canvas> element in HTML5?", choices: ["To create graphics on the fly", "To add video content", "To include external scripts"], correct: 0 }
-            ],
-            Python: [
-                { question: "What is the correct file extension for Python files?", choices: [".pyth", ".pt", ".py"], correct: 2 },
-                { question: "How do you create a variable with the numeric value 5?", choices: ["x = int(5)", "x = 5", "Both"], correct: 2 },
-                { question: "Which method can be used to remove any whitespace from both the beginning and the end of a string?", choices: ["strip()", "trim()", "len()"], correct: 0 },
-                { question: "What is the correct syntax to output 'Hello World' in Python?", choices: ["echo('Hello World')", "print('Hello World')", "console.log('Hello World')"], correct: 1 },
-                { question: "What is the purpose of the 'self' keyword in Python?", choices: ["Refers to the current instance of the class", "Defines a new class", "Creates a variable"], correct: 0 },
-                { question: "Which function is used to read data from a file in Python?", choices: ["read()", "get()", "open()"], correct: 0 },
-                { question: "What does the 'continue' statement do in a loop?", choices: ["Exits the loop", "Skips the current iteration and continues to the next iteration", "Breaks the loop"], correct: 1 },
-                { question: "Which of the following is a mutable data type in Python?", choices: ["tuple", "list", "string"], correct: 1 },
-                { question: "How do you handle exceptions in Python?", choices: ["try-except blocks", "catch blocks", "error handling"], correct: 0 },
-                { question: "What is the purpose of the 'with' statement in Python?", choices: ["To manage resources and ensure proper cleanup", "To define a new function", "To create a class"], correct: 0 }
-            ],
-            Java: [
-                { question: "Which company developed Java?", choices: ["Microsoft", "Sun Microsystems", "Google"], correct: 1 },
-                { question: "Which keyword is used to create a class in Java?", choices: ["class", "MyClass", "Class"], correct: 0 },
-                { question: "Which of these is a reserved word in Java?", choices: ["array", "goto", "null"], correct: 1 },
-                { question: "Which method is used to start a thread in Java?", choices: ["start()", "run()", "begin()"], correct: 0 },
-                { question: "What is the default value of a boolean variable in Java?", choices: ["true", "false", "null"], correct: 1 },
-                { question: "Which access modifier allows access to a member only within its own class?", choices: ["public", "protected", "private"], correct: 2 },
-                { question: "What is the result of 10 / 3 in Java?", choices: ["3", "3.3", "3.333"], correct: 0 },
-                { question: "What is the purpose of the 'static' keyword in Java?", choices: ["It allows a method to be called without creating an instance of the class", "It defines a new class", "It makes a method synchronized"], correct: 0 },
-                { question: "How do you create a new thread in Java?", choices: ["By implementing the Runnable interface", "By extending the Thread class", "Both"], correct: 2 },
-                { question: "What is the purpose of the 'synchronized' keyword in Java?", choices: ["To ensure only one thread can access a resource at a time", "To create a new thread", "To stop a thread"], correct: 0 }
-            ],
-            CSS: [
-                { question: "What does CSS stand for?", choices: ["Computer Style Sheets", "Creative Style Sheets", "Cascading Style Sheets"], correct: 2 },
-                { question: "Where in an HTML document is the correct place to refer to an external style sheet?", choices: ["In the <head> section", "At the end of the document", "In the <body> section"], correct: 0 },
-                { question: "Which HTML attribute is used to define inline styles?", choices: ["styles", "class", "style"], correct: 2 },
-                { question: "Which is the correct CSS syntax?", choices: ["body:color=black;", "body {color: black;}", "{body;color:black;"], correct: 1 },
-                { question: "How do you add a background color for all <h1> elements?", choices: ["all.h1 {background-color:#FFFFFF;}", "h1 {background-color:#FFFFFF;}", "h1.all {background-color:#FFFFFF;}"], correct: 1 },
-                { question: "Which CSS property is used to change the text color of an element?", choices: ["fgcolor", "text-color", "color"], correct: 2 },
-                { question: "Which CSS property controls the text size?", choices: ["font-size", "text-size", "font-style"], correct: 0 },
-                { question: "How do you display hyperlinks without an underline?", choices: ["a {decoration:no-underline;}", "a {underline:none;}", "a {text-decoration:none;}"], correct: 2 },
-                { question: "Which property is used to change the font of an element?", choices: ["font-family", "font-style", "font-weight"], correct: 0 },
-                { question: "How do you make the text bold?", choices: ["font:bold;", "font-weight:bold;", "style:bold;"], correct: 1 }
-            ],
-            JavaScript: [
-                { question: "Inside which HTML element do we put the JavaScript?", choices: ["<javascript>", "<script>", "<js>"], correct: 1 },
-                { question: "What is the correct syntax for referring to an external script called 'xxx.js'?", choices: ["<script src='xxx.js'>", "<script name='xxx.js'>", "<script href='xxx.js'>"], correct: 0 },
-                { question: "How do you write 'Hello World' in an alert box?", choices: ["alert('Hello World');", "msg('Hello World');", "alertBox('Hello World');"], correct: 0 },
-                { question: "How do you create a function in JavaScript?", choices: ["function:myFunction()", "function myFunction()", "function = myFunction()"], correct: 1 },
-                { question: "How do you call a function named 'myFunction'?", choices: ["call myFunction()", "call function myFunction()", "myFunction()"], correct: 2 },
-                { question: "How do you write an IF statement in JavaScript?", choices: ["if i == 5 then", "if (i == 5)", "if i = 5"], correct: 1 },
-                { question: "How does a WHILE loop start?", choices: ["while i = 1 to 10", "while (i <= 10)", "while (i < 10; i++)"], correct: 1 },
-                { question: "How can you add a comment in a JavaScript?", choices: ["'This is a comment", "//This is a comment", "<!--This is a comment-->"], correct: 1 },
-                { question: "What is the correct way to write a JavaScript array?", choices: ["var colors = 'red', 'green', 'blue'", "var colors = (1:'red', 2:'green', 3:'blue')", "var colors = ['red', 'green', 'blue']"], correct: 2 },
-                { question: "How do you round the number 7.25 to the nearest integer?", choices: ["Math.rnd(7.25)", "round(7.25)", "Math.round(7.25)"], correct: 2 }
-            ]
-        };
-
-        // Shuffle function to randomize questions
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
 
         // Sign up function
         function signUp() {
@@ -211,8 +151,9 @@
             }
 
             if (users.get(email) === password) {
-                document.getElementById('login-signup-container').style.display = 'none';
-                document.getElementById('quiz-selection-container').style.display = 'block';
+                message.textContent = 'Login successful!';
+                document.getElementById('login-signup-container').classList.add('hidden');
+                document.getElementById('quiz-container').classList.remove('hidden');
             } else {
                 message.textContent = 'Invalid credentials.';
             }
@@ -224,74 +165,351 @@
             return re.test(email);
         }
 
-        // Start quiz function
-        function startQuiz(topic) {
-            document.getElementById('quiz-selection-container').style.display = 'none';
-            document.getElementById('quiz-container').style.display = 'block';
-            document.getElementById('quiz-title').textContent = `${topic} Quiz`;
+        // Quiz data
+        const quizData = {
+    python: {
+        easy: [
+            { question: "What is the keyword to define a function in Python?", options: ["function", "def", "fun", "define"], answer: "def" },
+            { question: "Which data type is used to store multiple values in a single variable?", options: ["int", "list", "str", "float"], answer: "list" }
+        ],
+        moderate: [
+            { question: "What is a correct syntax to output 'Hello World' in Python?", options: ["echo('Hello World')", "print('Hello World')", "p('Hello World')", "println('Hello World')"], answer: "print('Hello World')" },
+            { question: "Which method can be used to remove any whitespace from both the beginning and the end of a string?", options: ["strip()", "trim()", "remove()", "cut()"], answer: "strip()" }
+        ],
+        extreme: [
+            { question: "Which of the following is not a core data type in Python?", options: ["List", "Dictionary", "Tuples", "Class"], answer: "Class" },
+            { question: "What is the output of the following: print(2**3)?", options: ["8", "6", "9", "7"], answer: "8" }
+        ]
+    },
+    c: {
+        easy: [
+            { question: "Which data type is used to create a variable that should store text?", options: ["char", "string", "txt", "int"], answer: "char" },
+            { question: "Which operator can be used to compare two values?", options: ["=", "==", "><", "<>"], answer: "==" }
+        ],
+        moderate: [
+            { question: "How do you create a variable with the numeric value 5?", options: ["num x = 5;", "int x = 5;", "x = 5;", "int x == 5;"], answer: "int x = 5;" },
+            { question: "Which function is used to get the length of a string?", options: ["length()", "len()", "size()", "strlen()"], answer: "strlen()" }
+        ],
+        extreme: [
+            { question: "Which of the following is used for dynamic memory allocation?", options: ["malloc", "alloc", "new", "create"], answer: "malloc" },
+            { question: "What is the output of the following code: printf('%d', (5 == 5));?", options: ["1", "0", "true", "false"], answer: "1" }
+        ]
+    },
+   
+    dbms: {
+        easy: [
+            { question: "What does SQL stand for?", options: ["Structured Query Language", "Strong Question Language", "Structured Query Line", "Simple Query Language"], answer: "Structured Query Language" },
+            { question: "Which of the following is a type of JOIN in SQL?", options: ["INNER", "UPPER", "LOWER", "CONCAT"], answer: "INNER" }
+        ],
+        moderate: [
+            { question: "What command is used to remove all records from a table in SQL?", options: ["DELETE", "REMOVE", "DROP", "ERASE"], answer: "DELETE" },
+            { question: "Which SQL clause is used to sort the result set?", options: ["ORDER BY", "SORT BY", "GROUP BY", "FILTER BY"], answer: "ORDER BY" }
+        ],
+        extreme: [
+            { question: "Which normal form eliminates transitive dependency?", options: ["1NF", "2NF", "3NF", "BCNF"], answer: "3NF" },
+            { question: "What is the command to create a new table in SQL?", options: ["CREATE TABLE", "NEW TABLE", "ADD TABLE", "MAKE TABLE"], answer: "CREATE TABLE" }
+        ]
+    },
+    computers: {
+        easy: [
+            { question: "What does CPU stand for?", options: ["Central Processing Unit", "Central Process Unit", "Computer Personal Unit", "Central Processor Unit"], answer: "Central Processing Unit" },
+            { question: "Which of these is an example of an input device?", options: ["Monitor", "Keyboard", "Printer", "Speaker"], answer: "Keyboard" }
+        ],
+        moderate: [
+            { question: "Which is the brain of the computer?", options: ["ALU", "RAM", "CPU", "Hard Drive"], answer: "CPU" },
+            { question: "What does RAM stand for?", options: ["Random Access Memory", "Read Access Memory", "Run Access Memory", "Random Active Memory"], answer: "Random Access Memory" }
+        ],
+        extreme: [
+            { question: "Which part of the computer is responsible for arithmetic and logic operations?", options: ["ALU", "RAM", "CPU", "Control Unit"], answer: "ALU" },
+            { question: "What type of memory is non-volatile?", options: ["RAM", "Cache", "ROM", "Register"], answer: "ROM" }
+        ]
+    },
+    networks: {
+        easy: [
+            { question: "What does LAN stand for?", options: ["Local Area Network", "Long Area Network", "Large Area Network", "Local Access Network"], answer: "Local Area Network" },
+            { question: "Which device is used to connect different networks?", options: ["Router", "Switch", "Hub", "Repeater"], answer: "Router" }
+        ],
+        moderate: [
+            { question: "Which protocol is used to send email?", options: ["FTP", "SMTP", "HTTP", "SSH"], answer: "SMTP" },
+            { question: "What is the full form of IP in networking?", options: ["Internet Protocol", "Internal Protocol", "Internet Process", "Internal Process"], answer: "Internet Protocol" }
+        ],
+        extreme: [
+            { question: "What is the primary function of a firewall?", options: ["Monitoring", "Security", "Networking", "Hosting"], answer: "Security" },
+            { question: "Which protocol is used for secure communication over the internet?", options: ["HTTP", "HTTPS", "FTP", "SMTP"], answer: "HTTPS" }
+        ]
+    },
+    excel: {
+        easy: [
+            { question: "Which function is used to calculate the sum of a range of cells in Excel?", options: ["SUM", "ADD", "TOTAL", "SUMMATION"], answer: "SUM" },
+            { question: "Which symbol is used to start a formula in Excel?", options: ["=", "+", "-", "/"], answer: "=" }
+        ],
+        moderate: [
+            { question: "What function is used to find the average of a range of cells?", options: ["MEAN", "AVERAGE", "MEDIAN", "MID"], answer: "AVERAGE" },
+            { question: "How can you quickly adjust the size of a column in Excel?", options: ["Double-click the column header", "Right-click and select 'Adjust Size'", "Press ALT + F4", "Use the Format menu"], answer: "Double-click the column header" }
+        ],
+        extreme: [
+            { question: "Which function is used to search for a value in the first column of a range and returns a value in the same row from a specified column?", options: ["HLOOKUP", "LOOKUP", "SEARCH", "VLOOKUP"], answer: "VLOOKUP" },
+            { question: "What is the shortcut key to open the 'Find and Replace' dialog box in Excel?", options: ["Ctrl + F", "Ctrl + H", "Ctrl + R", "Ctrl + P"], answer: "Ctrl + H" }
+        ]
+    },
+    word: {
+        easy: [
+            { question: "Which menu in MS Word is used to change the font?", options: ["Insert", "File", "Format", "Home"], answer: "Home" },
+            { question: "How can you quickly create a new document in Word?", options: ["Ctrl + N", "Ctrl + O", "Ctrl + M", "Ctrl + P"], answer: "Ctrl + N" }
+        ],
+        moderate: [
+            { question: "Which key combination is used to save a document in Word?", options: ["Ctrl + S", "Ctrl + A", "Ctrl + W", "Ctrl + F"], answer: "Ctrl + S" },
+            { question: "What is the default file extension for a Word document?", options: [".txt", ".pdf", ".doc", ".docx"], answer: ".docx" }
+        ],
+        extreme: [
+            { question: "How can you insert a page break in a Word document?", options: ["Ctrl + Enter", "Ctrl + Shift", "Ctrl + B", "Ctrl + P"], answer: "Ctrl + Enter" },
+            { question: "Which feature in Word allows you to combine multiple documents into one?", options: ["Merge", "Combine", "Join", "Mail Merge"], answer: "Mail Merge" }
+        ]
+    },
+    powerpoint: {
+        easy: [
+            { question: "Which key is used to start a presentation from the beginning?", options: ["F5", "F4", "F6", "F7"], answer: "F5" },
+            { question: "Which tab is used to add a new slide in PowerPoint?", options: ["Home", "Insert", "Design", "Slide"], answer: "Home" }
+        ],
+        moderate: [
+            { question: "Which view in PowerPoint is used to arrange the order of slides?", options: ["Slide Sorter", "Normal", "Reading", "Slide Show"], answer: "Slide Sorter" },
+            { question: "How can you insert a hyperlink in a slide?", options: ["Ctrl + K", "Ctrl + H", "Ctrl + L", "Ctrl + Y"], answer: "Ctrl + K" }
+        ],
+        extreme: [
+            { question: "Which feature is used to apply motion effects to objects in PowerPoint?", options: ["Transitions", "Animations", "Designs", "Layouts"], answer: "Animations" },
+            { question: "How can you insert a video into a PowerPoint slide?", options: ["Insert > Video", "Insert > Media", "Insert > Object", "Insert > File"], answer: "Insert > Video" }
+        ]
+    },
+    ai: {
+        easy: [
+            { question: "What does AI stand for?", options: ["Artificial Intelligence", "Automated Intelligence", "Advanced Intelligence", "Applied Intelligence"], answer: "Artificial Intelligence" },
+            { question: "Which of the following is a popular AI framework?", options: ["TensorFlow", "React", "Django", "Spring"], answer: "TensorFlow" }
+        ],
+        moderate: [
+            { question: "Which term is used for the ability of an AI to learn from its environment?", options: ["Training", "Supervised Learning", "Reinforcement Learning", "Deep Learning"], answer: "Reinforcement Learning" },
+            { question: "What is the main goal of machine learning?", options: ["To create a supercomputer", "To enable machines to make decisions based on data", "To replace human workers", "To improve hardware performance"], answer: "To enable machines to make decisions based on data" }
+        ],
+        extreme: [
+            { question: "Which algorithm is commonly used for image recognition?", options: ["KNN", "CNN", "RNN", "SVM"], answer: "CNN" },
+            { question: "What is the term for a model that tries to predict a continuous value?", options: ["Classification", "Regression", "Clustering", "Association"], answer: "Regression" }
+        ]
+    },
+ 
+    ml: {
+        easy: [
+            { question: "What does ML stand for?", options: ["Machine Learning", "Machine Language", "Model Learning", "Micro Learning"], answer: "Machine Learning" },
+            { question: "Which of the following is a type of machine learning?", options: ["Supervised Learning", "Structured Learning", "Systematic Learning", "Sequential Learning"], answer: "Supervised Learning" }
+        ],
+        moderate: [
+            { question: "What is the purpose of a training dataset?", options: ["To train the model", "To evaluate the model", "To test the model", "To design the model"], answer: "To train the model" },
+            { question: "Which of the following is an example of unsupervised learning?", options: ["Classification", "Regression", "Clustering", "Decision Trees"], answer: "Clustering" }
+        ],
+        extreme: [
+            { question: "Which technique is used to reduce the dimensionality of a dataset?", options: ["PCA", "SVM", "KNN", "RNN"], answer: "PCA" },
+            { question: "What is a common loss function used in regression problems?", options: ["Mean Squared Error", "Cross-Entropy", "Hinge Loss", "Log Loss"], answer: "Mean Squared Error" }
+        ]
+    },
+    cloud: {
+        easy: [
+            { question: "What does SaaS stand for?", options: ["Software as a Service", "Storage as a Service", "Security as a Service", "System as a Service"], answer: "Software as a Service" },
+            { question: "Which of the following is a cloud storage service?", options: ["Google Drive", "Adobe Photoshop", "Visual Studio", "Microsoft Word"], answer: "Google Drive" }
+        ],
+        moderate: [
+            { question: "What is the primary benefit of cloud computing?", options: ["Cost efficiency", "Slower processing", "Limited accessibility", "Increased hardware"], answer: "Cost efficiency" },
+            { question: "Which type of cloud service model provides virtualized computing resources over the internet?", options: ["IaaS", "PaaS", "SaaS", "DBaaS"], answer: "IaaS" }
+        ],
+        extreme: [
+            { question: "What does the term 'cloud bursting' refer to?", options: ["Using cloud resources during peak demand", "Bursting of cloud storage", "Breaking security in the cloud", "A type of cloud deployment"], answer: "Using cloud resources during peak demand" },
+            { question: "Which of the following is a hybrid cloud?", options: ["Combination of private and public clouds", "Only public cloud", "Only private cloud", "Combination of two private clouds"], answer: "Combination of private and public clouds" }
+        ]
+    },
+    data_science: {
+        easy: [
+            { question: "Which programming language is widely used for data science?", options: ["Python", "HTML", "Java", "CSS"], answer: "Python" },
+            { question: "What does 'EDA' stand for in data science?", options: ["Exploratory Data Analysis", "External Data Analysis", "Effective Data Analysis", "Efficient Data Analysis"], answer: "Exploratory Data Analysis" }
+        ],
+        moderate: [
+            { question: "Which library in Python is used for data manipulation and analysis?", options: ["NumPy", "Pandas", "SciPy", "Matplotlib"], answer: "Pandas" },
+            { question: "What type of plot is used to show the relationship between two variables?", options: ["Bar Plot", "Scatter Plot", "Histogram", "Pie Chart"], answer: "Scatter Plot" }
+        ],
+        extreme: [
+            { question: "What is the main purpose of a confusion matrix?", options: ["To summarize the performance of a classification algorithm", "To visualize data distribution", "To optimize hyperparameters", "To impute missing values"], answer: "To summarize the performance of a classification algorithm" },
+            { question: "What is overfitting in the context of machine learning?", options: ["Model performs well on training data but poorly on unseen data", "Model performs poorly on training data but well on unseen data", "Model performs well on both training and unseen data", "Model performs poorly on both training and unseen data"], answer: "Model performs well on training data but poorly on unseen data" }
+        ]
+    },
+    electric: {
+        easy: [
+            { question: "What is the unit of electric current?", options: ["Volt", "Ampere", "Ohm", "Watt"], answer: "Ampere" },
+            { question: "Which device is used to measure electric current?", options: ["Voltmeter", "Ammeter", "Ohmmeter", "Wattmeter"], answer: "Ammeter" }
+        ],
+        moderate: [
+            { question: "What does AC stand for in electrical terms?", options: ["Alternating Current", "Active Current", "Alternate Circuit", "Active Circuit"], answer: "Alternating Current" },
+            { question: "Which law states that the current through a conductor between two points is directly proportional to the voltage across the two points?", options: ["Ohm's Law", "Kirchhoff's Law", "Faraday's Law", "Coulomb's Law"], answer: "Ohm's Law" }
+        ],
+        extreme: [
+            { question: "What is the formula for electrical power?", options: ["P = IV", "P = I^2R", "P = V^2/R", "All of the above"], answer: "All of the above" },
+            { question: "Which type of material is typically used as a conductor?", options: ["Copper", "Rubber", "Plastic", "Wood"], answer: "Copper" }
+        ]
+    },
+    electronics: {
+        easy: [
+            { question: "Which component is used to store electrical energy in an electric field?", options: ["Resistor", "Capacitor", "Inductor", "Transformer"], answer: "Capacitor" },
+            { question: "What is the unit of resistance?", options: ["Ohm", "Farad", "Henry", "Volt"], answer: "Ohm" }
+        ],
+        moderate: [
+            { question: "What is the function of a diode?", options: ["To allow current to flow in one direction only", "To resist current flow", "To store electrical charge", "To amplify signals"], answer: "To allow current to flow in one direction only" },
+            { question: "What does LED stand for?", options: ["Light Emitting Diode", "Low Emission Diode", "Light Energy Diode", "Low Energy Diode"], answer: "Light Emitting Diode" }
+        ],
+        extreme: [
+            { question: "Which component is used to amplify electrical signals?", options: ["Transistor", "Capacitor", "Inductor", "Resistor"], answer: "Transistor" },
+            { question: "Which electronic component can be used to convert AC to DC?", options: ["Diode", "Capacitor", "Transistor", "Inductor"], answer: "Diode" }
+        ]
+    },
+    power: {
+        easy: [
+            { question: "What is the unit of power?", options: ["Watt", "Volt", "Ampere", "Ohm"], answer: "Watt" },
+            { question: "Which law relates power, voltage, and current?", options: ["Ohm's Law", "Kirchhoff's Law", "Joule's Law", "Newton's Law"], answer: "Joule's Law" }
+        ],
+        moderate: [
+            { question: "What is the main source of energy for thermal power plants?", options: ["Coal", "Wind", "Solar", "Hydro"], answer: "Coal" },
+            { question: "Which device is used to convert mechanical energy into electrical energy?", options: ["Generator", "Motor", "Transformer", "Rectifier"], answer: "Generator" }
+        ],
+        extreme: [
+            { question: "Which type of power plant uses uranium as a fuel?", options: ["Nuclear Power Plant", "Thermal Power Plant", "Hydro Power Plant", "Wind Power Plant"], answer: "Nuclear Power Plant" },
+            { question: "What is the formula to calculate electrical energy?", options: ["E = P * t", "E = V * I", "E = I * R", "E = V^2 / R"], answer: "E = P * t" }
+        ]
+    },
+ 
+    ml: {
+        easy: [
+            { question: "What does ML stand for?", options: ["Machine Learning", "Machine Language", "Model Learning", "Micro Learning"], answer: "Machine Learning" },
+            { question: "Which of the following is a type of machine learning?", options: ["Supervised Learning", "Structured Learning", "Systematic Learning", "Sequential Learning"], answer: "Supervised Learning" }
+        ],
+        moderate: [
+            { question: "What is the purpose of a training dataset?", options: ["To train the model", "To evaluate the model", "To test the model", "To design the model"], answer: "To train the model" },
+            { question: "Which of the following is an example of unsupervised learning?", options: ["Classification", "Regression", "Clustering", "Decision Trees"], answer: "Clustering" }
+        ],
+        extreme: [
+            { question: "Which technique is used to reduce the dimensionality of a dataset?", options: ["PCA", "SVM", "KNN", "RNN"], answer: "PCA" },
+            { question: "What is a common loss function used in regression problems?", options: ["Mean Squared Error", "Cross-Entropy", "Hinge Loss", "Log Loss"], answer: "Mean Squared Error" }
+        ]
+    },
+    cloud: {
+        easy: [
+            { question: "What does SaaS stand for?", options: ["Software as a Service", "Storage as a Service", "Security as a Service", "System as a Service"], answer: "Software as a Service" },
+            { question: "Which of the following is a cloud storage service?", options: ["Google Drive", "Adobe Photoshop", "Visual Studio", "Microsoft Word"], answer: "Google Drive" }
+        ],
+        moderate: [
+            { question: "What is the primary benefit of cloud computing?", options: ["Cost efficiency", "Slower processing", "Limited accessibility", "Increased hardware"], answer: "Cost efficiency" },
+            { question: "Which type of cloud service model provides virtualized computing resources over the internet?", options: ["IaaS", "PaaS", "SaaS", "DBaaS"], answer: "IaaS" }
+        ],
+        extreme: [
+            { question: "What does the term 'cloud bursting' refer to?", options: ["Using cloud resources during peak demand", "Bursting of cloud storage", "Breaking security in the cloud", "A type of cloud deployment"], answer: "Using cloud resources during peak demand" },
+            { question: "Which of the following is a hybrid cloud?", options: ["Combination of private and public clouds", "Only public cloud", "Only private cloud", "Combination of two private clouds"], answer: "Combination of private and public clouds" }
+        ]
+    },
+    data_science: {
+        easy: [
+            { question: "Which programming language is widely used for data science?", options: ["Python", "HTML", "Java", "CSS"], answer: "Python" },
+            { question: "What does 'EDA' stand for in data science?", options: ["Exploratory Data Analysis", "External Data Analysis", "Effective Data Analysis", "Efficient Data Analysis"], answer: "Exploratory Data Analysis" }
+        ],
+        moderate: [
+            { question: "Which library in Python is used for data manipulation and analysis?", options: ["NumPy", "Pandas", "SciPy", "Matplotlib"], answer: "Pandas" },
+            { question: "What type of plot is used to show the relationship between two variables?", options: ["Bar Plot", "Scatter Plot", "Histogram", "Pie Chart"], answer: "Scatter Plot" }
+        ],
+        extreme: [
+            { question: "What is the main purpose of a confusion matrix?", options: ["To summarize the performance of a classification algorithm", "To visualize data distribution", "To optimize hyperparameters", "To impute missing values"], answer: "To summarize the performance of a classification algorithm" },
+            { question: "What is overfitting in the context of machine learning?", options: ["Model performs well on training data but poorly on unseen data", "Model performs poorly on training data but well on unseen data", "Model performs well on both training and unseen data", "Model performs poorly on both training and unseen data"], answer: "Model performs well on training data but poorly on unseen data" }
+        ]
+    },
+    electric: {
+        easy: [
+            { question: "What is the unit of electric current?", options: ["Volt", "Ampere", "Ohm", "Watt"], answer: "Ampere" },
+            { question: "Which device is used to measure electric current?", options: ["Voltmeter", "Ammeter", "Ohmmeter", "Wattmeter"], answer: "Ammeter" }
+        ],
+        moderate: [
+            { question: "What does AC stand for in electrical terms?", options: ["Alternating Current", "Active Current", "Alternate Circuit", "Active Circuit"], answer: "Alternating Current" },
+            { question: "Which law states that the current through a conductor between two points is directly proportional to the voltage across the two points?", options: ["Ohm's Law", "Kirchhoff's Law", "Faraday's Law", "Coulomb's Law"], answer: "Ohm's Law" }
+        ],
+        extreme: [
+            { question: "What is the formula for electrical power?", options: ["P = IV", "P = I^2R", "P = V^2/R", "All of the above"], answer: "All of the above" },
+            { question: "Which type of material is typically used as a conductor?", options: ["Copper", "Rubber", "Plastic", "Wood"], answer: "Copper" }
+        ]
+    },
+    electronics: {
+        easy: [
+            { question: "Which component is used to store electrical energy in an electric field?", options: ["Resistor", "Capacitor", "Inductor", "Transformer"], answer: "Capacitor" },
+            { question: "What is the unit of resistance?", options: ["Ohm", "Farad", "Henry", "Volt"], answer: "Ohm" }
+        ],
+        moderate: [
+            { question: "What is the function of a diode?", options: ["To allow current to flow in one direction only", "To resist current flow", "To store electrical charge", "To amplify signals"], answer: "To allow current to flow in one direction only" },
+            { question: "What does LED stand for?", options: ["Light Emitting Diode", "Low Emission Diode", "Light Energy Diode", "Low Energy Diode"], answer: "Light Emitting Diode" }
+        ],
+        extreme: [
+            { question: "Which component is used to amplify electrical signals?", options: ["Transistor", "Capacitor", "Inductor", "Resistor"], answer: "Transistor" },
+            { question: "Which electronic component can be used to convert AC to DC?", options: ["Diode", "Capacitor", "Transistor", "Inductor"], answer: "Diode" }
+  ]
+    },
+   
+};
+            // Add more topics and difficulty levels as needed
+        ;
 
-            const quizContent = document.getElementById('quiz-content');
-            quizContent.innerHTML = '';
+        function generateQuiz() {
+            const topic = document.getElementById('topic').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const questionsContainer = document.getElementById('questions');
+            questionsContainer.innerHTML = '';
+            const selectedQuestions = quizData[topic][difficulty];
+            const shuffledQuestions = selectedQuestions.sort(() => Math.random() - 0.5);
 
-            const topicQuestions = [...questions[topic]]; // Copy questions array
-            shuffle(topicQuestions); // Shuffle questions
-
-            topicQuestions.forEach((q, index) => {
+            shuffledQuestions.forEach((q, index) => {
                 const questionDiv = document.createElement('div');
-                questionDiv.className = 'question';
+                questionDiv.classList.add('question');
 
                 const questionTitle = document.createElement('h3');
-                questionTitle.textContent = q.question;
+                questionTitle.innerText = `Q${index + 1}: ${q.question}`;
                 questionDiv.appendChild(questionTitle);
 
-                q.choices.forEach((choice, i) => {
-                    const label = document.createElement('label');
-                    const input = document.createElement('input');
-                    input.type = 'radio';
-                    input.name = `question${index}`;
-                    input.value = i;
-                    label.appendChild(input);
-                    label.appendChild(document.createTextNode(choice));
-                    questionDiv.appendChild(label);
-                    questionDiv.appendChild(document.createElement('br'));
+                q.options.forEach(option => {
+                    const optionLabel = document.createElement('label');
+                    const optionInput = document.createElement('input');
+                    optionInput.type = 'radio';
+                    optionInput.name = `q${index}`;
+                    optionInput.value = option;
+
+                    optionLabel.appendChild(optionInput);
+                    optionLabel.appendChild(document.createTextNode(option));
+                    questionDiv.appendChild(optionLabel);
                 });
 
-                quizContent.appendChild(questionDiv);
+                questionsContainer.appendChild(questionDiv);
             });
+
+            document.getElementById('quiz').classList.remove('hidden');
         }
 
-        // Submit quiz function
         function submitQuiz() {
-            const quizContent = document.getElementById('quiz-content');
-            const quizTitle = document.getElementById('quiz-title').textContent.replace(' Quiz', '');
-            const topicQuestions = questions[quizTitle];
-            const feedbackContent = document.getElementById('feedback-content');
-            feedbackContent.innerHTML = '';
+            const resultContainer = document.getElementById('result');
+            const selectedQuestions = quizData[document.getElementById('topic').value][document.getElementById('difficulty').value];
+            const result = [];
             let score = 0;
+            const correctAnswers = selectedQuestions.map(q => q.answer);
+            const userAnswers = Array.from(document.querySelectorAll('input[type="radio"]:checked'))
+                .map(input => input.value);
 
-            topicQuestions.forEach((q, index) => {
-                const userAnswer = document.querySelector(`input[name="question${index}"]:checked`);
-                const feedback = document.createElement('div');
-                feedback.className = 'feedback';
-                
-                if (userAnswer && parseInt(userAnswer.value) === q.correct) {
-                    feedback.classList.add('correct');
-                    feedback.textContent = `Question ${index + 1}: Correct!`;
+            correctAnswers.forEach((answer, index) => {
+                if (userAnswers[index] === answer) {
+                    result.push(`<p class="correct-answer">Q${index + 1}: Correct</p>`);
                     score++;
                 } else {
-                    feedback.classList.add('incorrect');
-                    feedback.textContent = `Question ${index + 1}: Incorrect. Correct answer: ${q.choices[q.correct]}`;
+                    result.push(`<p class="wrong-answer">Q${index + 1}: Wrong. Correct answer: ${answer}</p>`);
                 }
-
-                feedbackContent.appendChild(feedback);
             });
 
-            const scoreFeedback = document.createElement('div');
-            scoreFeedback.textContent = `Your score: ${score}/${topicQuestions.length}`;
-            feedbackContent.appendChild(scoreFeedback);
-
-            document.getElementById('quiz-container').style.display = 'none';
-            document.getElementById('feedback-container').style.display = 'block';
+            result.push(`<p>Score: ${score} out of ${correctAnswers.length}</p>`);
+            resultContainer.innerHTML = result.join('');
+            resultContainer.classList.remove('hidden');
         }
     </script>
 </body>
